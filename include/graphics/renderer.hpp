@@ -6,32 +6,27 @@
 
 #include <graphics/camera.hpp>
 #include <graphics/shader_program.hpp>
+#include <graphics/texture_loader.hpp>
 
 class Renderer
 {
 private:
-    static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-    static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
-    void handleFramebufferSizeChange(int width, int height);
-    void handleInput(int key, int scancode, int action, int mode);
-    unsigned int projectionLocId;
-    unsigned int viewLocId;
-    bool pressedKeys[1024] = {0};
+    GLFWwindow *window;
+    std::unique_ptr<Camera> camera;
+    std::unique_ptr<ShaderProgram> shader;
+    TextureLoader texture_loader;
 
 public:
-    GLFWwindow *window;
-    Renderer(int window_x = 800, int window_y = 600);
+    void handleFramebufferSizeChange(int width, int height);
+    Renderer(int window_x, int window_y);
     ~Renderer();
     void tick();
     void updateCamera();
+    GLFWwindow *getWindow();
     unsigned int windowWidth;
     unsigned int windowHeight;
-    Camera *camera = nullptr;
-    ShaderProgram *shader = nullptr;
-    float cameraSpeed = 5.0f;
-    GLfloat lastFrame = 0.0f;
-    GLfloat deltaTime = 0.0f;
-    
+    Camera &getCamera();
+    ShaderProgram &getShader();
 };
 
 #endif

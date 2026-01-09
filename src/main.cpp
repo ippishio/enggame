@@ -1,5 +1,4 @@
 #ifdef __APPLE__
-// Defined before OpenGL and GLUT includes to avoid deprecation messages
 #define GL_SILENCE_DEPRECATION
 #endif
 
@@ -13,7 +12,7 @@
 
 #include <graphics/shader_program.hpp>
 #include <graphics/renderer.hpp>
-
+#include <core/engine.hpp>
 
 unsigned int build_vao(GLfloat vertices[], unsigned int indices[], int v_size, int i_size)
 {
@@ -40,17 +39,53 @@ unsigned int build_vao(GLfloat vertices[], unsigned int indices[], int v_size, i
     glEnableVertexAttribArray(2);
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     return VAO;
 }
+
+int glCheckError_(const char *file, int line)
+{
+    GLenum errorCode;
+    while ((errorCode = glGetError()) != GL_NO_ERROR)
+    {
+        std::string error;
+        switch (errorCode)
+        {
+        case GL_INVALID_ENUM:
+            error = "INVALID_ENUM";
+            break;
+        case GL_INVALID_VALUE:
+            error = "INVALID_VALUE";
+            break;
+        case GL_INVALID_OPERATION:
+            error = "INVALID_OPERATION";
+            break;
+        case GL_OUT_OF_MEMORY:
+            error = "OUT_OF_MEMORY";
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            error = "INVALID_FRAMEBUFFER_OPERATION";
+            break;
+        }
+        std::cout << error << " | " << file << " (" << line << ")" << std::endl;
+    }
+    return errorCode;
+}
+#define glCheckError() glCheckError_(__FILE__, __LINE__)
+
 int main()
 {
-    Renderer renderer = Renderer();
+    Engine engine = Engine();
+    glCheckError();
+    Renderer &renderer = engine.getRenderer();
+    InputSystem &input = engine.getInputSystem();
+    Camera &camera = renderer.getCamera();
     GLfloat vertices[] = {
         // Позиции          // Цвета             // Текстурные координаты
-        0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 2.0f,   // Верхний правый
-        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 0.0f,  // Нижний правый
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // Нижний левый
-        -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 2.0f   // Верхний левый
+        0.5f, 0.5f, 0.0f, 2.0f, 2.0f,   // Верхний правый
+        0.5f, -0.5f, 0.0f, 2.0f, 0.0f,  // Нижний правый
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // Нижний левый
+        -0.5f, 0.5f, 0.0f, 0.0f, 2.0f   // Верхний левый
     };
     unsigned int indices[] = {
         // note that we start from 0!
@@ -62,8 +97,15 @@ int main()
         1.0f, 0.0f, // Нижний правый угол
         0.5f, 1.0f  // Верхняя центральная сторона
     };
-    int width, height = 256;
+    int width = 256;
+    int height = 256;
     unsigned char *image = SOIL_load_image("../assets/textures/grid.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+    if (!image)
+    {
+        std::cerr << "ERROR: Failed to load texture!" << std::endl;
+        std::cerr << "SOIL2 error: " << SOIL_last_result() << std::endl;
+        return -1;
+    }
     GLuint texture;
 
     glGenTextures(1, &texture);
@@ -72,30 +114,25 @@ int main()
     glGenerateMipmap(GL_TEXTURE_2D);
     SOIL_free_image_data(image);
     glBindTexture(GL_TEXTURE_2D, 0);
-    GLuint modelLoc = glGetUniformLocation(renderer.shader->id, "model");
+    GLuint modelLoc = glGetUniformLocation(renderer.getShader().id, "model");
     glm::mat4 model;
     unsigned int VAO1 = build_vao(vertices, indices, sizeof(vertices), sizeof(indices));
     unsigned int VAO2 = build_vao(vertices, indices, sizeof(vertices), sizeof(indices));
     glBindVertexArray(0);
-    while (!glfwWindowShouldClose(renderer.window))
+
+    while (!glfwWindowShouldClose(renderer.getWindow()))
     {
 
-        // render
-        // ------
-        glfwPollEvents();
-
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // draw our first triangle
-        renderer.shader->use();
+        renderer.getShader().use();
         model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5, 0.5, 0.5));
         model = glm::rotate(model, (GLfloat)glfwGetTime() * 5.0f, glm::vec3(0.0, 1.0, 1.0));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO1); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         // glDrawArrays(GL_TRIANGLES, 0, 6);
-        std::cout << "main loop\n";
-        renderer.updateCamera();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         model = glm::scale(glm::mat4(1.0f), glm::vec3(glm::sin((GLfloat)glfwGetTime()) * 2, 0.5, 0.5));
         model = glm::translate(model, glm::vec3(1, 1, 1));
@@ -105,7 +142,10 @@ int main()
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        renderer.tick();
+        GLfloat cameraSpeed = 5.0f * engine.deltaTime;
+        cameraFreeFly(camera, input, 0.05f, cameraSpeed);
+        engine.tick();
+        glCheckError();
     }
     return 0;
 }

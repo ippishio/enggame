@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-
+#include <glm/glm.hpp>
 class ShaderProgram
 {
 private:
@@ -18,7 +18,7 @@ public:
     void setUniform(const std::string &name, bool value) const;
     void setUniform(const std::string &name, float value) const;
     void setUniform(const std::string &name, int value) const;
-
+    void setUniform(const std::string &name, glm::mat4 & value) const;
     operator unsigned int() const
     {
         return id;

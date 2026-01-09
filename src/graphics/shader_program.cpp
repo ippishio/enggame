@@ -1,14 +1,19 @@
-#include <graphics/shader_program.hpp>
+#ifdef __APPLE__
+#define GL_SILENCE_DEPRECATION
+#endif
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <graphics/shader_program.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <stdio.h>
-
 
 ShaderProgram::ShaderProgram()
 {
@@ -39,7 +44,7 @@ void ShaderProgram::loadShader(std::string path, unsigned int shader_type)
             throw std::runtime_error(shader_error_info.str());
         }
         glAttachShader(id, shaderID);
-        loaded_shaders.push_back(id);
+        loaded_shaders.push_back(shaderID);
     }
     else
     {
@@ -53,31 +58,42 @@ void ShaderProgram::linkProgram()
     int success;
     char infoLog[512];
     glGetProgramiv(id, GL_LINK_STATUS, &success);
+
     if (!success)
     {
         glGetProgramInfoLog(id, 512, NULL, infoLog);
+
         std::stringstream shader_error_info;
         shader_error_info << "Shader linking " << infoLog << std::endl;
         throw std::runtime_error(shader_error_info.str());
     }
-    for (auto it = loaded_shaders.begin(); it != loaded_shaders.end(); ++it)
+    for (auto &it : loaded_shaders)
     {
-        glDeleteShader(*it);
+        glDeleteShader(it);
     }
 }
 
-void ShaderProgram::use() {
+void ShaderProgram::use()
+{
     glUseProgram(id);
 }
 
-void ShaderProgram::setUniform(const std::string &name, bool value) const {
-    glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value); 
+void ShaderProgram::setUniform(const std::string &name, bool value) const
+{
+    glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
 }
 
-void ShaderProgram::setUniform(const std::string &name, int value) const {
-    glUniform1i(glGetUniformLocation(id, name.c_str()), value); 
+void ShaderProgram::setUniform(const std::string &name, int value) const
+{
+    glUniform1i(glGetUniformLocation(id, name.c_str()), value);
 }
 
-void ShaderProgram::setUniform(const std::string &name, float value) const {
-    glUniform1f(glGetUniformLocation(id, name.c_str()), value); 
+void ShaderProgram::setUniform(const std::string &name, float value) const
+{
+    glUniform1f(glGetUniformLocation(id, name.c_str()), value);
+}
+
+void ShaderProgram::setUniform(const std::string &name, glm::mat4 &value) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }

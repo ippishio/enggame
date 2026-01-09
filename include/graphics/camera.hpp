@@ -4,18 +4,19 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-class Camera
+#include <core/game_object.hpp>
+#include <core/input_system.hpp>
+
+class Camera : public GameObject
 {
 private:
     glm::mat4 view;
     glm::mat4 projection;
-    unsigned int windowWidth;
-    unsigned int windowHeight;
 
 public:
-    glm::vec3 position;
     glm::vec3 front;
     glm::vec3 up;
+
     Camera(unsigned int windowWidth, unsigned int windowHeight,
            glm::vec3 cameraPos,
            glm::vec3 cameraFront,
@@ -25,4 +26,5 @@ public:
     glm::mat4 getViewMatrix();
 };
 
+void cameraFreeFly(Camera &camera, InputSystem &input, float camera_sensitivity = 0.05f, float camera_speed = 5.0f);
 #endif
