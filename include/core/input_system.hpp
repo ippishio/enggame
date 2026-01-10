@@ -20,7 +20,7 @@ public:
     bool isKeyPressed(int key);
     bool isKeyTouched(int key);
     bool isCursorDisabled();
-    void setCursorDisabledState(bool enable);
+    void setCursorDisabledState(bool state);
     glm::vec2 getMousePosition();
     glm::vec2 getMouseOffset();
 };

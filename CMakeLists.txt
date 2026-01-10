@@ -29,8 +29,12 @@ add_executable(game
     src/graphics/shader_program.cpp
     src/graphics/renderer.cpp
     src/graphics/camera.cpp
+    src/graphics/texture_loader.cpp
     src/core/engine.cpp
-    src/core/input_system.cpp)
+    src/core/input_system.cpp
+    src/core/game_object.cpp
+    src/game_objects/geometry_maker.cpp
+    )
 
 # Подключаем заголовочные файлы
 target_include_directories(game PRIVATE

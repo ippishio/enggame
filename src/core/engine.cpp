@@ -40,12 +40,12 @@ void Engine::tick()
         std::cout << "escape\n";
         if (input_system->isCursorDisabled())
         {
-            glfwSetInputMode(renderer->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            glfwSetInputMode(renderer->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             input_system->setCursorDisabledState(false);
         }
         else
         {
-            glfwSetInputMode(renderer->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            glfwSetInputMode(renderer->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             input_system->setCursorDisabledState(true);
         }
     }

@@ -1,9 +1,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <include/core/game_object.hpp>
+#include <core/game_object.hpp>
 
 #include <string>
+
+std::vector<GameObject *> GameObject::objects;
 
 GameObject::GameObject(const std::string &name, const std::string &texture)
     : position(_position),
@@ -38,27 +40,27 @@ GameObject &GameObject::getByName(std::string &name)
     throw std::runtime_error("GameObject with name '" + name + "' not found");
 }
 
-std::vector<GameObject &> &GameObject::getAllByName(std::string &name)
+std::vector<GameObject *> &GameObject::getAllByName(std::string &name)
 {
-    std::vector<GameObject &> ans;
-    for (const auto &obj : GameObject::objects)
+    std::vector<GameObject *> *ans = new std::vector<GameObject *>();
+    for (const auto obj : GameObject::objects)
     {
         if (obj->name == name)
         {
-            ans.push_back(*obj);
+            ans->push_back(obj);
         }
     }
-    return ans;
+    return *ans;
 }
 
-std::vector<GameObject &> &GameObject::getAllObjects()
+std::vector<GameObject *> &GameObject::getAllObjects()
 {
-    std::vector<GameObject &> ans;
-    for (const auto &obj : GameObject::objects)
+    std::vector<GameObject *> *ans = new std::vector<GameObject *>();
+    for (const auto obj : GameObject::objects)
     {
-        ans.push_back(*obj);
+        ans->push_back(obj);
     }
-    return ans;
+    return *ans;
 }
 
 void GameObject::setPosition(glm::vec3 position)
@@ -82,4 +84,13 @@ void GameObject::setScale(glm::vec3 scale)
 glm::mat4 GameObject::getModelMatrix()
 {
     return modelMatrix;
+}
+
+void GameObject::lookAt(glm::vec3 pos)
+{
+    glm::vec3 direction = glm::normalize(pos - position);
+    float yaw = glm::degrees(atan2(direction.z, direction.x));
+    float distanceXZ = sqrt(direction.x * direction.x + direction.z * direction.z);
+    float pitch = glm::degrees(atan2(direction.y, distanceXZ));
+    _rotation = glm::vec3(1.0f * pitch, yaw, 0.0f);
 }

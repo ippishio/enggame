@@ -22,7 +22,7 @@ void Renderer::handleFramebufferSizeChange(int width, int height)
     windowHeight = height;
     windowWidth = width;
     std::cout << "x: " << width << " y: " << height << std::endl;
-    camera->updateWindow(windowHeight, windowWidth);
+    camera->updateWindow(windowWidth, windowHeight);
     glViewport(0, 0, width, height);
 }
 
@@ -53,6 +53,7 @@ Renderer::Renderer(int window_x, int window_y)
     handleFramebufferSizeChange(framebufferWidth, framebufferHeight);
     glEnable(GL_DEPTH_TEST);
     shader.reset(new ShaderProgram());
+    texture_loader.reset(new TextureLoader());
     shader->loadShader("../assets/shaders/vertex_shader.glsl", GL_VERTEX_SHADER);
     shader->loadShader("../assets/shaders/fragment_shader.glsl", GL_FRAGMENT_SHADER);
     shader->linkProgram();
@@ -81,16 +82,17 @@ void Renderer::tick()
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shader->use();
-    for (auto &obj_it : GameObject::getAllObjects())
+    for (auto obj_it : GameObject::getAllObjects())
     {
-        if (obj_it.VAO == 0)
+        GameObject &obj = *obj_it;
+        if (obj.VAO == 0)
             continue;
-        glm::mat4 model_matrix = obj_it.getModelMatrix();
+        glm::mat4 model_matrix = obj.getModelMatrix();
         shader->setUniform("model", model_matrix);
-        GLuint texture_id = texture_loader.getTextureId(obj_it.texture);
+        GLuint texture_id = texture_loader->getTextureId(obj.texture);
         glBindTexture(GL_TEXTURE_2D, texture_id);
-        glBindVertexArray(obj_it.VAO);
-        glDrawElements(GL_TRIANGLES, obj_it.vertices_count, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(obj.VAO);
+        glDrawElements(GL_TRIANGLES, obj.vertices_count, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
     updateCamera();

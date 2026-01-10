@@ -9,10 +9,13 @@
 class GeometryMaker
 {
 public:
-    static GameObject &makePlane(glm::vec2 pos1, glm::vec2 pos2,
+    static GameObject *makePlane(glm::vec2 pos1, glm::vec2 pos2,
                                  const std::string &name = "Plane",
                                  const std::string &texture = "default",
                                  float texture_count_x = 1.0f, float texture_count_y = 1.0f);
+    static GameObject *makeCube(glm::vec2 pos1, glm::vec2 pos2,
+                                const std::string &name = "Cube", const std::string &texture = "default",
+                                float texture_count_x = 1.0f, float texture_count_y = 1.0f);
     static unsigned int buildVAO(GLfloat vertices[], unsigned int indices[], int v_size, int i_size);
 };
 

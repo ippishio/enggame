@@ -27,7 +27,7 @@ GLuint TextureLoader::loadTexture(const std::string &path, const std::string &na
         _path,
         SOIL_LOAD_AUTO,
         new_id,
-        SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT);
+        SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT | SOIL_FLAG_TEXTURE_REPEATS);
     if (new_id == 0)
     {
         std::stringstream error_info;
@@ -35,6 +35,7 @@ GLuint TextureLoader::loadTexture(const std::string &path, const std::string &na
         throw std::runtime_error(error_info.str());
     }
     loaded_textures[name] = new_id;
+    return new_id;
 }
 
 GLuint TextureLoader::getTextureId(const std::string &name)

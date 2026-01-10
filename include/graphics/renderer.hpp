@@ -14,7 +14,7 @@ private:
     GLFWwindow *window;
     std::unique_ptr<Camera> camera;
     std::unique_ptr<ShaderProgram> shader;
-    TextureLoader texture_loader;
+    std::unique_ptr<TextureLoader> texture_loader;
 
 public:
     void handleFramebufferSizeChange(int width, int height);
@@ -27,6 +27,7 @@ public:
     unsigned int windowHeight;
     Camera &getCamera();
     ShaderProgram &getShader();
+    TextureLoader &getTextureLoader() { return *texture_loader; }
 };
 
 #endif
