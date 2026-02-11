@@ -4,10 +4,10 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include <core/game_object.hpp>
+#include <core/transform.hpp>
 #include <core/input_system.hpp>
 
-class Camera : public GameObject
+class Camera : public Transform
 {
 private:
     glm::mat4 view;
@@ -16,7 +16,6 @@ private:
 public:
     glm::vec3 front;
     glm::vec3 up;
-
     Camera(unsigned int windowWidth, unsigned int windowHeight,
            glm::vec3 cameraPos,
            glm::vec3 cameraFront,

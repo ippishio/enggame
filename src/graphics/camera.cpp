@@ -36,6 +36,7 @@ void cameraFreeFly(Camera &camera, InputSystem &input, float camera_sensitivity,
 {
     if (input.isCursorDisabled())
     {
+        float _camera_speed = camera_speed;
         glm::vec3 offset = glm::vec3(input.getMouseOffset(), 0.0f);
         offset *= camera_sensitivity;
         GLfloat _x = offset.x;
@@ -48,18 +49,20 @@ void cameraFreeFly(Camera &camera, InputSystem &input, float camera_sensitivity,
             new_rotation.x = -89.0f;
         camera.setRotation(new_rotation);
 
+        if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT))
+            _camera_speed = 3.0f * camera_speed;
         if (input.isKeyPressed(GLFW_KEY_W))
-            camera.setPosition(camera.position + camera_speed * camera.front);
+            camera.setPosition(camera.position + _camera_speed * camera.front);
         if (input.isKeyPressed(GLFW_KEY_S))
-            camera.setPosition(camera.position - camera_speed * camera.front);
+            camera.setPosition(camera.position - _camera_speed * camera.front);
         if (input.isKeyPressed(GLFW_KEY_A))
             camera.setPosition(camera.position - glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed);
         if (input.isKeyPressed(GLFW_KEY_D))
             camera.setPosition(camera.position + glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed);
         if (input.isKeyPressed(GLFW_KEY_Q))
-            camera.setPosition(camera.position + camera_speed * camera.up);
+            camera.setPosition(camera.position + _camera_speed * camera.up);
         if (input.isKeyPressed(GLFW_KEY_E))
-            camera.setPosition(camera.position - camera_speed * camera.up);
+            camera.setPosition(camera.position - _camera_speed * camera.up);
         if (input.isKeyPressed(GLFW_KEY_F))
             camera.lookAt(glm::vec3(0.0f));
     }

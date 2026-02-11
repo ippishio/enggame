@@ -2,30 +2,41 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <core/game_object.hpp>
+#include <graphics/mesh.hpp>
+#include <graphics/shader_program.hpp>
 
 #include <string>
+#include <iostream>
 
 std::vector<GameObject *> GameObject::objects;
 
-GameObject::GameObject(const std::string &name, const std::string &texture)
-    : position(_position),
-      rotation(_rotation),
-      scale(_scale)
+GameObject::GameObject(const std::string &name, const std::string &shader)
+    : scale(_scale)
+{
+    this->model.reset(nullptr);
+    this->name = name;
+    this->texture = "default";
+    objects.push_back(this);
+    obj_it = objects.end();
+    assignToShader(shader);
+}
+
+GameObject::GameObject(Model *model, const std::string &name, const std::string &textur, const std::string &shader)
+    : scale(_scale)
 {
     this->name = name;
     this->texture = texture;
+    this->model.reset(model);
     objects.push_back(this);
     obj_it = objects.end();
+    assignToShader(shader);
 }
-
 void GameObject::destroy()
 {
+    ShaderProgram &shader = ShaderProgram::getProgramByName(this->shader);
+    shader.removeGameObject(shader_it);
     objects.erase(obj_it);
     delete this;
-}
-GameObject::~GameObject()
-{
-    destroy();
 }
 
 GameObject &GameObject::getByName(std::string &name)
@@ -53,24 +64,20 @@ std::vector<GameObject *> &GameObject::getAllByName(std::string &name)
     return *ans;
 }
 
-std::vector<GameObject *> &GameObject::getAllObjects()
+std::vector<GameObject *> GameObject::getAllObjects()
 {
-    std::vector<GameObject *> *ans = new std::vector<GameObject *>();
-    for (const auto obj : GameObject::objects)
-    {
-        ans->push_back(obj);
-    }
-    return *ans;
+
+    return objects;
 }
 
 void GameObject::setPosition(glm::vec3 position)
 {
-    _position = position;
+    Transform::setPosition(position);
     modelMatrix = glm::translate(modelMatrix, position);
 }
-void GameObject::setRotation(glm::vec3 rotation)
+void GameObject::setRotation(glm::vec3 rotation, bool radians)
 {
-    _rotation = rotation;
+    Transform::setRotation(rotation, radians);
     modelMatrix = glm::rotate(modelMatrix, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     modelMatrix = glm::rotate(modelMatrix, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     modelMatrix = glm::rotate(modelMatrix, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
@@ -86,11 +93,9 @@ glm::mat4 GameObject::getModelMatrix()
     return modelMatrix;
 }
 
-void GameObject::lookAt(glm::vec3 pos)
+void GameObject::assignToShader(const std::string &name)
 {
-    glm::vec3 direction = glm::normalize(pos - position);
-    float yaw = glm::degrees(atan2(direction.z, direction.x));
-    float distanceXZ = sqrt(direction.x * direction.x + direction.z * direction.z);
-    float pitch = glm::degrees(atan2(direction.y, distanceXZ));
-    _rotation = glm::vec3(1.0f * pitch, yaw, 0.0f);
+    ShaderProgram &shader = ShaderProgram::getProgramByName(name);
+    this->shader_it = shader.assignGameObject(this);
+    this->shader = name;
 }

@@ -21,13 +21,13 @@ public:
     Renderer(int window_x, int window_y);
     ~Renderer();
     void tick();
-    void updateCamera();
+    void updateCamera(ShaderProgram &shader);
     GLFWwindow *getWindow();
     unsigned int windowWidth;
     unsigned int windowHeight;
     Camera &getCamera();
     ShaderProgram &getShader();
-    TextureLoader &getTextureLoader() { return *texture_loader; }
+    TextureLoader &getTextureLoader() { return *texture_loader.get(); }
 };
 
 #endif

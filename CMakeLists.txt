@@ -11,43 +11,45 @@ endif()
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
+find_package(assimp REQUIRED)
+
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fsanitize=address")
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall")
 set(CMAKE_C_FLAGS_DEBUG "-g -O0 -Wall")
-
-# Добавляем SOIL2
-add_subdirectory(libs/SOIL2)
 
 # Добавляем исполняемый файл
 add_executable(game
     src/main.cpp
     src/glad.c
+    src/stb_image.c
     src/graphics/shader_program.cpp
     src/graphics/renderer.cpp
     src/graphics/camera.cpp
     src/graphics/texture_loader.cpp
+    src/graphics/mesh.cpp
+    src/graphics/light.cpp
     src/core/engine.cpp
     src/core/input_system.cpp
     src/core/game_object.cpp
-    src/game_objects/geometry_maker.cpp
+    src/core/transform.cpp
     )
 
 # Подключаем заголовочные файлы
 target_include_directories(game PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/libs/SOIL2/src
-    ${GLM_INCLUDE_DIRS})  # Добавляем GLM
+    ${GLM_INCLUDE_DIRS}
+    ${ASSIMP_INCLUDE_DIRS})  # Добавляем GLM
 
 # Линкуем библиотеки
 target_link_libraries(game
     glfw
     ${OPENGL_gl_LIBRARY}
-    soil2
-    dl)  # Добавляем динамическую библиотеку
+    dl
+    assimp::assimp)  # Добавляем динамическую библиотеку
 
 # macOS специфичные настройки
 if(APPLE)

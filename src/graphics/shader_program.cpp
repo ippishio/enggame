@@ -8,16 +8,22 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <graphics/shader_program.hpp>
+#include <core/game_object.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <stdio.h>
+#include <string>
 
-ShaderProgram::ShaderProgram()
+std::map<std::string, ShaderProgram *> ShaderProgram::program_names;
+
+ShaderProgram::ShaderProgram(const std::string &name)
 {
     id = glCreateProgram();
+    program_names[name] = this;
+    this->name = name;
 }
 
 void ShaderProgram::loadShader(std::string path, unsigned int shader_type)
@@ -93,7 +99,47 @@ void ShaderProgram::setUniform(const std::string &name, float value) const
     glUniform1f(glGetUniformLocation(id, name.c_str()), value);
 }
 
+void ShaderProgram::setUniform(const std::string &name, glm::vec3 value) const
+{
+    glUniform3f(glGetUniformLocation(id, name.c_str()), value.x, value.y, value.z);
+}
+
 void ShaderProgram::setUniform(const std::string &name, glm::mat4 &value) const
 {
+    setUniform(id, name, value);
+}
+
+void ShaderProgram::setUniform(unsigned int id, const std::string &name, const glm::mat4 &value)
+{
     glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+}
+
+std::vector<GameObject *>::iterator ShaderProgram::assignGameObject(GameObject *obj)
+{
+    assigned_gameobjects.push_back(obj);
+    return assigned_gameobjects.end();
+}
+void ShaderProgram::removeGameObject(std::vector<GameObject *>::iterator obj_it)
+{
+    assigned_gameobjects.erase(obj_it);
+}
+
+std::vector<GameObject *> &ShaderProgram::getAssignedGameObjects()
+{
+    return assigned_gameobjects;
+}
+
+ShaderProgram &ShaderProgram::getProgramByName(const std::string &name)
+{
+    return *program_names[name];
+}
+
+std::vector<ShaderProgram *> ShaderProgram::getAllPrograms()
+{
+    std::vector<ShaderProgram *> shaders;
+    for (const auto &pair : program_names)
+    {
+        shaders.push_back(pair.second);
+    }
+    return shaders;
 }
