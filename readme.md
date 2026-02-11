@@ -2,6 +2,8 @@
 
 Весь рабочий функционал - в main
 
+![Game screenshot](screenshot.jpg)
+
 # Сборка и запуск
 
 ```bash
