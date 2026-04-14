@@ -32,44 +32,62 @@ private:
     unsigned int VBO = 0;
     unsigned int EBO = 0;
     int vertices_count = 0;
+    glm::vec3 bounds_min = glm::vec3(0.0f);
+    glm::vec3 bounds_max = glm::vec3(0.0f);
     unsigned int buildMesh();
+    void updateBounds();
 
 public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+    ~Mesh();
+    Mesh(const Mesh &other);
+    Mesh &operator=(const Mesh &other);
+    Mesh(Mesh &&other) noexcept;
+    Mesh &operator=(Mesh &&other) noexcept;
     void Draw(ShaderProgram &shader);
-    static Mesh &makePlane(glm::vec2 pos1, glm::vec2 pos2, const std::string &texture_name = "default");
-    static Mesh &makeCube(glm::vec3 scale, const std::string &texture_name = "default");
+    static Mesh makePlane(glm::vec2 pos1, glm::vec2 pos2, const std::string &texture_name = "default");
+    static Mesh makeCube(glm::vec3 scale, const std::string &texture_name = "default");
     unsigned int getVAO() { return VAO; }
     unsigned int getVerticesCount() { return vertices_count; }
+    const glm::vec3 &getBoundsMin() const { return bounds_min; }
+    const glm::vec3 &getBoundsMax() const { return bounds_max; }
 };
 
 class Model
 {
 public:
-    Model(char *path, const std::string &texture_directory, bool flipUV = false)
+    Model(const std::string &path, const std::string &texture_directory, bool flipUV = false)
     {
         this->flipUV = flipUV;
         this->texture_path = texture_directory;
         loadModel(path);
     }
 
-    Model(Mesh &mesh, const std::string &texture_name = "default")
+    Model(Mesh mesh, const std::string &texture_name = "default")
     {
         mesh.textures.push_back(TextureLoader::getInstance().getTexture(texture_name));
-        this->meshes.push_back(mesh);
+        this->meshes.push_back(std::move(mesh));
+        updateBounds();
     }
     void Draw(ShaderProgram &shader);
+    const glm::vec3 &getBoundsMin() const { return bounds_min; }
+    const glm::vec3 &getBoundsMax() const { return bounds_max; }
+    glm::vec3 getBoundsHalfExtents() const { return (bounds_max - bounds_min) * 0.5f; }
+    glm::vec3 getBoundsCenter() const { return (bounds_min + bounds_max) * 0.5f; }
 
 private:
     bool flipUV = false;
     std::vector<Mesh> meshes;
+    glm::vec3 bounds_min = glm::vec3(0.0f);
+    glm::vec3 bounds_max = glm::vec3(0.0f);
     std::string directory;
     void loadModel(std::string path);
     void processNode(aiNode *node, const aiScene *scene);
     Mesh processMesh(aiMesh *mesh, const aiScene *scene);
+    void updateBounds();
     std::string texture_path;
 };
 

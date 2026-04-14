@@ -5,6 +5,7 @@
 #include <graphics/mesh.hpp>
 
 #include <string>
+#include <algorithm>
 
 std::vector<Light *> Light::instances;
 
@@ -12,22 +13,19 @@ Light::Light(const std::string &name)
     : GameObject(name, "light")
 {
     instances.push_back(this);
-    light_obj_it = instances.end();
 }
 
-Light::Light(Model *model, const std::string &name, const std::string &texture) : GameObject(model, name, texture, "light")
+Light::Light(std::shared_ptr<Model> model, const std::string &name, const std::string &texture) : GameObject(std::move(model), name, texture, "light")
 {
     instances.push_back(this);
-    light_obj_it = instances.end();
 }
 
-void Light::destroy()
+Light::~Light()
 {
-    instances.erase(light_obj_it);
-    GameObject::destroy();
+    instances.erase(std::remove(instances.begin(), instances.end(), this), instances.end());
 }
 
-std::vector<Light *> Light::getAllLights()
+const std::vector<Light *> &Light::getAllLights()
 {
     return instances;
 }

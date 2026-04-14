@@ -17,7 +17,7 @@ Camera::Camera(unsigned int windowWidth, unsigned int windowHeight, glm::vec3 ca
 void Camera::updateWindow(unsigned int windowWidth, unsigned int windowHeight)
 {
     std::cout << "new asecct ratio: " << (float)windowWidth / (float)windowHeight << std::endl;
-    projection = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 }
 
 glm::mat4 Camera::getViewMatrix()

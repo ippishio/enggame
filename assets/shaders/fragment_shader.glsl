@@ -1,38 +1,65 @@
 #version 330 core
 out vec4 FragColor;
 
+#define MAX_LIGHTS 8
+
 in vec2 TexCoord;
 in vec3 Normal;
 in vec3 FragPos;
 
 uniform sampler2D texture_diffuse1;
-uniform sampler2D texture_specular1;
-uniform vec3 lightPos;
-uniform vec3 lightColor;
-uniform vec3 ambientStrength;
+struct PointLight
+{
+    vec3 position;
+    vec3 color;
+    float ambientStrength;
+};
+
+uniform int lightCount;
+uniform PointLight lights[MAX_LIGHTS];
 uniform vec3 cameraPos;
-float specularStrength = 1.5f;
+uniform vec3 skyLightColor;
+uniform vec3 groundLightColor;
+uniform vec3 sunDirection;
+uniform vec3 sunColor;
+uniform float sunStrength;
+const float specularStrength = 0.35f;
 
 void main()
 {
-
+    vec3 albedo = vec3(texture(texture_diffuse1, TexCoord));
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightPos - FragPos);
     vec3 viewDir = normalize(cameraPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    vec3 specular = specularStrength * spec * vec3(texture(texture_specular1, TexCoord));
+    float skyFactor = clamp(norm.y * 0.5f + 0.5f, 0.0f, 1.0f);
+    vec3 hemisphericLight = mix(groundLightColor, skyLightColor, skyFactor) * albedo;
+    vec3 lighting = hemisphericLight;
 
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
-    vec3 ambient = lightColor * ambientStrength;
-    vec3 result = (ambient + diffuse + specular);
-    vec4 color = vec4(result, 1.0f);
-    vec4 tex_color = texture(texture_diffuse1, TexCoord);
-    // vec4 color = vec4(TexCoord.x, TexCoord.y, 0.0, 1.0);
-    if (color == vec4(0.0f, 0.0f, 0.0f, 0.0f))
+    vec3 sunDir = normalize(-sunDirection);
+    vec3 sunReflect = reflect(-sunDir, norm);
+    float sunDiffuse = max(dot(norm, sunDir), 0.0f);
+    float sunSpecular = pow(max(dot(viewDir, sunReflect), 0.0f), 32.0f);
+    lighting += sunStrength * (sunDiffuse * sunColor * albedo + specularStrength * sunSpecular * sunColor);
+
+    for (int i = 0; i < lightCount; i++)
     {
-        color = vec4(0.7f, 0.3f, 0.2f, 0.0f);
+        vec3 lightDir = normalize(lights[i].position - FragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+
+        float diff = max(dot(norm, lightDir), 0.0f);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0f), 32.0f);
+        float distanceToLight = length(lights[i].position - FragPos);
+        float attenuation = 1.0f / (1.0f + 0.09f * distanceToLight + 0.032f * distanceToLight * distanceToLight);
+
+        vec3 ambient = lights[i].ambientStrength * lights[i].color * albedo;
+        vec3 diffuse = diff * lights[i].color * albedo;
+        vec3 specular = specularStrength * spec * lights[i].color;
+        lighting += (ambient + diffuse + specular) * attenuation;
     }
-    FragColor = color * tex_color;
+
+    if (lightCount == 0)
+    {
+        lighting = hemisphericLight + sunStrength * sunDiffuse * sunColor * albedo;
+    }
+
+    FragColor = vec4(lighting, 1.0f);
 }

@@ -35,7 +35,12 @@ add_executable(game
     src/core/engine.cpp
     src/core/input_system.cpp
     src/core/game_object.cpp
+    src/core/enemy.cpp
+    src/core/player.cpp
+    src/core/projectile.cpp
+    src/core/scene.cpp
     src/core/transform.cpp
+    src/physics/physics_engine.cpp
     )
 
 # Подключаем заголовочные файлы
@@ -66,10 +71,16 @@ if(APPLE)
         -Wno-deprecated-declarations)
 endif()
 
-# Копируем ресурсы в директорию сборки
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 # Устанавливаем рабочую директорию для отладки
 set_target_properties(game PROPERTIES
     MACOSX_BUNDLE FALSE
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+# Копируем ресурсы при каждой сборке, чтобы новые/измененные assets попадали в build.
+# Бинарник лежит в ${CMAKE_BINARY_DIR}/bin, а код грузит ресурсы через ../assets.
+add_custom_command(TARGET game POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${CMAKE_BINARY_DIR}/assets"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+            "${CMAKE_BINARY_DIR}/assets"
+    COMMENT "Copying assets to build directory")

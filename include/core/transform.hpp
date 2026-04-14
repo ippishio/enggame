@@ -12,8 +12,9 @@ protected:
 public:
     const glm::vec3 &position;
     const glm::vec3 &rotation;
+    virtual ~Transform() = default;
     virtual void setPosition(glm::vec3 position);
-    virtual void setRotation(glm::vec3 rotation, bool radians = true);
+    virtual void setRotation(glm::vec3 rotation, bool radians = false);
     void lookAt(glm::vec3 pos);
     Transform() : position(_position),
                   rotation(_rotation) {};

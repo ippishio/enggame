@@ -18,9 +18,9 @@ void Transform::setPosition(glm::vec3 position)
 }
 void Transform::setRotation(glm::vec3 rotation, bool radians)
 {
-    if (!radians)
+    if (radians)
     {
-        rotation = glm::vec3(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z));
+        rotation = glm::degrees(rotation);
     }
     _rotation = rotation;
 }
@@ -31,5 +31,5 @@ void Transform::lookAt(glm::vec3 pos)
     float yaw = glm::degrees(atan2(direction.z, direction.x));
     float distanceXZ = sqrt(direction.x * direction.x + direction.z * direction.z);
     float pitch = glm::degrees(atan2(direction.y, distanceXZ));
-    setRotation(glm::vec3(1.0f * pitch, yaw, 0.0f), true);
+    setRotation(glm::vec3(pitch, yaw, 0.0f), false);
 }

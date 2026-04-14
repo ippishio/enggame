@@ -12,9 +12,20 @@
 
 #include <string>
 #include <stdexcept>
+#include <utility>
+#include <limits>
 
 unsigned int Mesh::buildMesh()
 {
+    vertices_count = static_cast<int>(vertices.size());
+
+    if (VAO != 0)
+    {
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+    }
+
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -42,7 +53,25 @@ unsigned int Mesh::buildMesh()
     return VAO;
 }
 
-Mesh &Mesh::makePlane(glm::vec2 pos1, glm::vec2 pos2, const std::string &texture_name)
+void Mesh::updateBounds()
+{
+    if (vertices.empty())
+    {
+        bounds_min = glm::vec3(0.0f);
+        bounds_max = glm::vec3(0.0f);
+        return;
+    }
+
+    bounds_min = vertices[0].position;
+    bounds_max = vertices[0].position;
+    for (const Vertex &vertex : vertices)
+    {
+        bounds_min = glm::min(bounds_min, vertex.position);
+        bounds_max = glm::max(bounds_max, vertex.position);
+    }
+}
+
+Mesh Mesh::makePlane(glm::vec2 pos1, glm::vec2 pos2, const std::string &texture_name)
 {
     GLfloat texture_count_x = pos2.x - pos1.x;
     GLfloat texture_count_y = pos2.y - pos1.y;
@@ -73,13 +102,19 @@ Mesh &Mesh::makePlane(glm::vec2 pos1, glm::vec2 pos2, const std::string &texture
         Texture texture = TextureLoader::getInstance().getTexture(texture_name);
         textures = {texture};
     }
-    Mesh *new_obj = new Mesh(vertices, indices, textures);
-    new_obj->buildMesh();
-    return *new_obj;
+    return Mesh(vertices, indices, textures);
 }
 
-Mesh &Mesh::makeCube(glm::vec3 scale, const std::string &texture_name)
+Mesh Mesh::makeCube(glm::vec3 scale, const std::string &texture_name)
 {
+    const glm::vec3 face_normals[] = {
+        glm::vec3(0.0f, 0.0f, -1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(-1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, -1.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f)};
+
     GLfloat _vertices[] = {
         -scale.x * 0.5f, -scale.y * 0.5f, -scale.z * 0.5f, 0.0f, 0.0f,
         scale.x * 0.5f, -scale.y * 0.5f, -scale.z * 0.5f, 1.0f, 0.0f,
@@ -119,6 +154,7 @@ Mesh &Mesh::makeCube(glm::vec3 scale, const std::string &texture_name)
         Vertex vertex;
         vertex.position = glm::vec3(_vertices[5 * i], _vertices[5 * i + 1], _vertices[5 * i + 2]);
         vertex.texCoords = glm::vec2(_vertices[5 * i + 3], _vertices[5 * i + 4]);
+        vertex.normal = face_normals[i / 4];
         vertices.push_back(vertex);
     }
     std::vector<Texture> textures;
@@ -127,9 +163,7 @@ Mesh &Mesh::makeCube(glm::vec3 scale, const std::string &texture_name)
         Texture texture = TextureLoader::getInstance().getTexture(texture_name);
         textures = {texture};
     }
-    Mesh *new_obj = new Mesh(vertices, indices, textures);
-    new_obj->buildMesh();
-    return *new_obj;
+    return Mesh(vertices, indices, textures);
 }
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
@@ -137,7 +171,83 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
     this->vertices = vertices;
     this->indices = indices;
     this->textures = textures;
+    this->updateBounds();
     this->buildMesh();
+}
+
+Mesh::~Mesh()
+{
+    if (VAO != 0)
+    {
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+    }
+}
+
+Mesh::Mesh(const Mesh &other)
+    : bounds_min(other.bounds_min), bounds_max(other.bounds_max),
+      vertices(other.vertices), indices(other.indices), textures(other.textures)
+{
+    buildMesh();
+}
+
+Mesh &Mesh::operator=(const Mesh &other)
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+
+    vertices = other.vertices;
+    indices = other.indices;
+    textures = other.textures;
+    bounds_min = other.bounds_min;
+    bounds_max = other.bounds_max;
+    buildMesh();
+    return *this;
+}
+
+Mesh::Mesh(Mesh &&other) noexcept
+    : VAO(other.VAO), VBO(other.VBO), EBO(other.EBO), vertices_count(other.vertices_count),
+      bounds_min(other.bounds_min), bounds_max(other.bounds_max),
+      vertices(std::move(other.vertices)), indices(std::move(other.indices)), textures(std::move(other.textures))
+{
+    other.VAO = 0;
+    other.VBO = 0;
+    other.EBO = 0;
+    other.vertices_count = 0;
+}
+
+Mesh &Mesh::operator=(Mesh &&other) noexcept
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+
+    if (VAO != 0)
+    {
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+    }
+
+    VAO = other.VAO;
+    VBO = other.VBO;
+    EBO = other.EBO;
+    vertices_count = other.vertices_count;
+    bounds_min = other.bounds_min;
+    bounds_max = other.bounds_max;
+    vertices = std::move(other.vertices);
+    indices = std::move(other.indices);
+    textures = std::move(other.textures);
+
+    other.VAO = 0;
+    other.VBO = 0;
+    other.EBO = 0;
+    other.vertices_count = 0;
+    return *this;
 }
 
 void Mesh::Draw(ShaderProgram &shader)
@@ -194,6 +304,25 @@ void Model::loadModel(std::string path)
     }
     directory = path.substr(0, path.find_last_of('/'));
     processNode(scene->mRootNode, scene);
+    updateBounds();
+}
+
+void Model::updateBounds()
+{
+    if (meshes.empty())
+    {
+        bounds_min = glm::vec3(0.0f);
+        bounds_max = glm::vec3(0.0f);
+        return;
+    }
+
+    bounds_min = meshes[0].getBoundsMin();
+    bounds_max = meshes[0].getBoundsMax();
+    for (const Mesh &mesh : meshes)
+    {
+        bounds_min = glm::min(bounds_min, mesh.getBoundsMin());
+        bounds_max = glm::max(bounds_max, mesh.getBoundsMax());
+    }
 }
 
 void Model::processNode(aiNode *node, const aiScene *scene)
@@ -288,6 +417,11 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     // 4. height maps
     std::vector<Texture> heightMaps = texture_loader.loadModelTextures(material, aiTextureType_AMBIENT, texture_path);
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+
+    if (textures.empty())
+    {
+        textures.push_back(texture_loader.getTexture("default"));
+    }
     // return a mesh object created from the extracted mesh data
     return Mesh(vertices, indices, textures);
 }

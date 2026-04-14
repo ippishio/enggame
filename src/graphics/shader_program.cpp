@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
+#include <algorithm>
 
 std::map<std::string, ShaderProgram *> ShaderProgram::program_names;
 
@@ -24,6 +25,15 @@ ShaderProgram::ShaderProgram(const std::string &name)
     id = glCreateProgram();
     program_names[name] = this;
     this->name = name;
+}
+
+ShaderProgram::~ShaderProgram()
+{
+    program_names.erase(name);
+    if (id != 0)
+    {
+        glDeleteProgram(id);
+    }
 }
 
 void ShaderProgram::loadShader(std::string path, unsigned int shader_type)
@@ -114,14 +124,16 @@ void ShaderProgram::setUniform(unsigned int id, const std::string &name, const g
     glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
-std::vector<GameObject *>::iterator ShaderProgram::assignGameObject(GameObject *obj)
+void ShaderProgram::assignGameObject(GameObject *obj)
 {
     assigned_gameobjects.push_back(obj);
-    return assigned_gameobjects.end();
 }
-void ShaderProgram::removeGameObject(std::vector<GameObject *>::iterator obj_it)
+
+void ShaderProgram::removeGameObject(GameObject *obj)
 {
-    assigned_gameobjects.erase(obj_it);
+    assigned_gameobjects.erase(
+        std::remove(assigned_gameobjects.begin(), assigned_gameobjects.end(), obj),
+        assigned_gameobjects.end());
 }
 
 std::vector<GameObject *> &ShaderProgram::getAssignedGameObjects()

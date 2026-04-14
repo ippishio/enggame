@@ -7,6 +7,7 @@
 #include <graphics/camera.hpp>
 #include <graphics/shader_program.hpp>
 #include <graphics/texture_loader.hpp>
+#include <memory>
 
 class Renderer
 {
@@ -14,7 +15,14 @@ private:
     GLFWwindow *window;
     std::unique_ptr<Camera> camera;
     std::unique_ptr<ShaderProgram> shader;
-    std::unique_ptr<TextureLoader> texture_loader;
+    std::unique_ptr<ShaderProgram> light_shader;
+    std::unique_ptr<ShaderProgram> skybox_shader;
+    TextureLoader *texture_loader = nullptr;
+    std::shared_ptr<Model> health_bar_model;
+    std::unique_ptr<Mesh> skybox_mesh;
+    unsigned int skybox_texture = 0;
+    void drawEnemyHealthBars();
+    void drawSkybox();
 
 public:
     void handleFramebufferSizeChange(int width, int height);
@@ -27,7 +35,8 @@ public:
     unsigned int windowHeight;
     Camera &getCamera();
     ShaderProgram &getShader();
-    TextureLoader &getTextureLoader() { return *texture_loader.get(); }
+    void setSkyboxTexture(const std::string &texture_name);
+    TextureLoader &getTextureLoader() { return *texture_loader; }
 };
 
 #endif

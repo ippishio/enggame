@@ -19,6 +19,17 @@ TextureLoader::TextureLoader()
     loadTexture(default_texture_path, "default");
 }
 
+TextureLoader::~TextureLoader()
+{
+    for (const auto &[name, texture] : loaded_textures)
+    {
+        if (texture.id != 0)
+        {
+            glDeleteTextures(1, &texture.id);
+        }
+    }
+}
+
 Texture TextureLoader::loadTexture(const std::string &path, const std::string &name, aiTextureType type)
 {
     std::cout << "loading texture path: " << path << ", name: " << name;
@@ -109,8 +120,8 @@ GLuint TextureLoader::modelTextureFromFile(const char *path)
     }
     else
     {
+        glDeleteTextures(1, &textureID);
         throw std::runtime_error("Texture failed to load at path: " + std::string(path));
-        stbi_image_free(data);
     }
 
     return textureID;

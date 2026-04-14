@@ -36,6 +36,7 @@ public:
                                            const std::string &directory);
     void useTexture(const std::string &name);
     void useDefaultTexture();
+    ~TextureLoader();
     TextureLoader(const TextureLoader &) = delete;
 };
 
